@@ -269,15 +269,22 @@ class Api:
                     for i, file_path in enumerate(txts):
                         filename = os.path.basename(file_path)
                         raw_title = os.path.splitext(filename)[0]
-                        m = re.search(r'第(\d+)章[\s_]*(.*)', raw_title)
+                        # 兼容“第 96 章 xxx”这类章节号前后带空格的标题格式
+                        m = re.search(r'第\s*(\d+)\s*章[\s_]*(.*)', raw_title)
                         chapter_num = str(m.group(1)) if m else ""
                         chapter_title = m.group(2).strip() if m else ""
                         
                         with open(file_path, "r", encoding="utf-8") as f:
                             lines = f.readlines()
+                        first_line = lines[0].strip() if lines else ""
+
+                        if not chapter_num and first_line:
+                            m_num = re.search(r'第\s*(\d+)\s*章', first_line)
+                            if m_num:
+                                chapter_num = str(m_num.group(1))
                             
-                        if not chapter_title and lines:
-                            m2 = re.search(r'第.*?章[\s：:]*(.*)', lines[0].strip())
+                        if not chapter_title and first_line:
+                            m2 = re.search(r'第\s*\d+\s*章[\s：:]*(.*)', first_line)
                             if m2:
                                 chapter_title = m2.group(1).strip()
                         if not chapter_title:
